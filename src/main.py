@@ -27,7 +27,7 @@ def main():
     print(f"Number of NaNs is {np.count_nonzero(np.isnan(scu_tens))}")
 
     # save ndarray to a binary file for easy loading
-    np.save("../resources/scu_tens.npy", scu_tens)
+    np.save("tensors/scu_tens.npy", scu_tens)
 
     # parafac(scu_tens, rank=3, init='random', tol=10e-6)
     print("Completed")

@@ -4,7 +4,8 @@ import dask.dataframe as dd
 from tensorly.decomposition import parafac
 import time
 
-path_to_parquet = "../resources/scu_mapbox.parquet"
+#path_to_parquet = "../resources/scu_mapbox.parquet"
+path_to_parquet = "scu_mapbox.parquet"
 
 
 def main():

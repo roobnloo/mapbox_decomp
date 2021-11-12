@@ -2,6 +2,7 @@ import math
 import numpy as np
 import dask.dataframe as dd
 from tensorly.decomposition import parafac
+import time
 
 path_to_parquet = "../resources/scu_mapbox.parquet"
 
@@ -17,10 +18,10 @@ def main():
     # Initialize tensor to be all missing values (nan)
     scu_tens = np.empty((len(lats), len(lons), len(days)))
     scu_tens[:] = np.nan
+    print(f"Shape of tensor is {scu_tens.shape}")
 
     fill_tensor(df, lats, lons, days, scu_tens)
 
-    print(f"Shape of tensor is {scu_tens.shape}")
     print(f"Number filled is {np.count_nonzero(~np.isnan(scu_tens))}")
     print(f"Number of NaNs is {np.count_nonzero(np.isnan(scu_tens))}")
 
@@ -42,9 +43,12 @@ def init_df(path):
 
 def fill_tensor(df, lats, lons, days, scu_tens):
     """Fills in the values of scu_tens from dataframe df. This code is currently hot garbage. Very slow."""
+    tic = time.perf_counter()
     for i, xlat in enumerate(lats):
+        toc = time.perf_counter()
         print(f"iter {i}")
         print(f"Number filled: {np.count_nonzero(~np.isnan(scu_tens))}")
+        print(f"Elapsed time: {(toc - tic)/60:1.1f} minutes")
         matching_df0 = df.loc[df['xlat'] == lats[i]]
         matching_xlons = matching_df0.xlon.compute()
         for xlon in matching_xlons:

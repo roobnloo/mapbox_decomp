@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import dask.dataframe as dd
+import pandas as pd
 from tensorly.decomposition import parafac
 import time
 import configparser
@@ -19,7 +20,7 @@ def parquet_to_tensor(parquet_path, tensor_path):
     scu_tens[:] = np.nan
     print(f"Shape of tensor is {scu_tens.shape}")
 
-    fill_tensor(df, lats, lons, days, scu_tens)
+    detect_duplicates(df, lats, lons, days, scu_tens)
 
     print(f"Number filled is {np.count_nonzero(~np.isnan(scu_tens))}")
     print(f"Number of NaNs is {np.count_nonzero(np.isnan(scu_tens))}")
@@ -31,13 +32,24 @@ def parquet_to_tensor(parquet_path, tensor_path):
     print("Completed")
 
 
-def init_df(path):
+def init_df(path, keep_extra_columns=False):
     """Initializes a Dask df from parquet path"""
     scu_tens_parq = dd.read_parquet(path)
-    scu_tens_parq = scu_tens_parq[["xlat", "xlon", "agg_day_period", "activity_index_total"]]
+    if not keep_extra_columns:
+        scu_tens_parq = scu_tens_parq[["xlat", "xlon", "agg_day_period", "activity_index_total"]]
     df = scu_tens_parq.partitions[0]
     df.agg_day_period = dd.to_datetime(df.agg_day_period)
     return df
+
+
+def detect_duplicates(df: dd.DataFrame):
+    pd_df = df.compute()
+    pd_df = pd_df.set_index(['xlat', 'xlon', 'agg_day_period'])
+    dupe = pd_df.index.duplicated()
+    print(f"Total {len(dupe)} indices with duplicate entries.")
+    print("==== The following spatio-temporal indices contain duplicate entries ====")
+    print(pd_df[dupe])
+    print("==== End list of duplicates ====")
 
 
 def fill_tensor(df, lats, lons, days, scu_tens):
@@ -66,4 +78,6 @@ if __name__ == '__main__':
     path_to_scu_parquet = config['PATHS']['path_to_scu_parquet']
     tensor_out_path = config['PATHS']['tensor_out_path']
 
-    parquet_to_tensor(path_to_scu_parquet, tensor_out_path)
+    # parquet_to_tensor(path_to_scu_parquet, tensor_out_path)
+    df = init_df(path_to_scu_parquet, keep_extra_columns=True)
+    detect_duplicates(df)

@@ -3,13 +3,11 @@ import numpy as np
 import dask.dataframe as dd
 from tensorly.decomposition import parafac
 import time
-
-#path_to_parquet = "../resources/scu_mapbox.parquet"
-path_to_parquet = "scu_mapbox.parquet"
+import configparser
 
 
-def main():
-    df = init_df(path_to_parquet)
+def parquet_to_tensor(parquet_path, tensor_path):
+    df = init_df(parquet_path)
     # print(df.head())
 
     lats = df.sort_values("xlat").xlat.unique().compute().tolist()
@@ -27,7 +25,7 @@ def main():
     print(f"Number of NaNs is {np.count_nonzero(np.isnan(scu_tens))}")
 
     # save ndarray to a binary file for easy loading
-    np.save("tensors/scu_tens.npy", scu_tens)
+    np.save(tensor_path + "scu_tens.npy", scu_tens)
 
     # parafac(scu_tens, rank=3, init='random', tol=10e-6)
     print("Completed")
@@ -63,4 +61,9 @@ def fill_tensor(df, lats, lons, days, scu_tens):
 
 
 if __name__ == '__main__':
-    main()
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    path_to_scu_parquet = config['PATHS']['path_to_scu_parquet']
+    tensor_out_path = config['PATHS']['tensor_out_path']
+
+    parquet_to_tensor(path_to_scu_parquet, tensor_out_path)

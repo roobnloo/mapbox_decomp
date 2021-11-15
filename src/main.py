@@ -9,19 +9,9 @@ import configparser
 
 def parquet_to_tensor(parquet_path, tensor_path):
     df = init_df(parquet_path)
-    # print(df.head())
+    scu_tens = fill_tensor(df)
 
-    lats = df.sort_values("xlat").xlat.unique().compute().tolist()
-    lons = df.sort_values("xlon").xlon.unique().compute().tolist()
-    days = df.sort_values('agg_day_period').agg_day_period.unique().compute().tolist()
-
-    # Initialize tensor to be all missing values (nan)
-    scu_tens = np.empty((len(lats), len(lons), len(days)))
-    scu_tens[:] = np.nan
     print(f"Shape of tensor is {scu_tens.shape}")
-
-    detect_duplicates(df, lats, lons, days, scu_tens)
-
     print(f"Number filled is {np.count_nonzero(~np.isnan(scu_tens))}")
     print(f"Number of NaNs is {np.count_nonzero(np.isnan(scu_tens))}")
 
@@ -32,27 +22,32 @@ def parquet_to_tensor(parquet_path, tensor_path):
     print("Completed")
 
 
-def init_df(path, keep_extra_columns=False):
+def init_df(path, part=0, keep_extra_columns=False):
     """Initializes a Dask df from parquet path"""
     scu_tens_parq = dd.read_parquet(path)
     if not keep_extra_columns:
         scu_tens_parq = scu_tens_parq[["xlat", "xlon", "agg_day_period", "activity_index_total"]]
-    df = scu_tens_parq.partitions[0]
+    df = scu_tens_parq.partitions[part]
     df.agg_day_period = dd.to_datetime(df.agg_day_period)
     return df
 
 
-def detect_duplicates(df: dd.DataFrame):
+def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
     pd_df = df.compute()
     pd_df = pd_df.set_index(['xlat', 'xlon', 'agg_day_period'])
-    dupe = pd_df.index.duplicated()
-    print(f"Total {len(dupe)} indices with duplicate entries.")
-    print("==== The following spatio-temporal indices contain duplicate entries ====")
-    print(pd_df[dupe])
-    print("==== End list of duplicates ====")
+    dupe_index = pd_df.index.duplicated(keep=not remove_duplicates)
+    pd_df = pd_df[~dupe_index]
+    pd_df = pd_df.sort_index()
+
+    # print(f"Total {len(dupe)} indices with duplicate entries.")
+    # print("==== The following spatio-temporal indices contain duplicate entries ====")
+    # print(pd_df[dupe])
+    # print("==== End list of duplicates ====")
+
+    return pd_df.to_xarray().to_array()
 
 
-def fill_tensor(df, lats, lons, days, scu_tens):
+def fill_tensor_slow(df, lats, lons, days, scu_tens):
     """Fills in the values of scu_tens from dataframe df. This code is currently hot garbage. Very slow."""
     tic = time.perf_counter()
     for i, xlat in enumerate(lats):
@@ -77,7 +72,4 @@ if __name__ == '__main__':
     config.read('config.ini')
     path_to_scu_parquet = config['PATHS']['path_to_scu_parquet']
     tensor_out_path = config['PATHS']['tensor_out_path']
-
-    # parquet_to_tensor(path_to_scu_parquet, tensor_out_path)
-    df = init_df(path_to_scu_parquet, keep_extra_columns=True)
-    detect_duplicates(df)
+    parquet_to_tensor(path_to_scu_parquet, tensor_out_path)

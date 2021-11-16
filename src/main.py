@@ -18,8 +18,14 @@ def parquet_to_tensor(parquet_path, tensor_path):
     # save ndarray to a binary file for easy loading
     np.save(tensor_path + "scu_tens.npy", scu_tens)
 
-    # parafac(scu_tens, rank=3, init='random', tol=10e-6)
+    decompose(scu_tens, tensor_path, 4)
     print("Completed")
+
+
+def decompose(scu_tens, tensor_path, r):
+    weights, factors = parafac(scu_tens, rank=r, init='random', tol=10e-6, mask=~np.isnan(scu_tens))
+    for i, fct in enumerate(factors):
+        np.save(tensor_path + f"factor_{i}", fct)
 
 
 def init_df(path, part=0, keep_extra_columns=False):
@@ -44,7 +50,7 @@ def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
     # print(pd_df[dupe])
     # print("==== End list of duplicates ====")
 
-    return pd_df.to_xarray().to_array()
+    return pd_df.to_xarray().to_array().to_numpy()
 
 
 def fill_tensor_slow(df, lats, lons, days, scu_tens):

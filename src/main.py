@@ -49,8 +49,8 @@ def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
     # print("==== The following spatio-temporal indices contain duplicate entries ====")
     # print(pd_df[dupe])
     # print("==== End list of duplicates ====")
-
-    return pd_df.to_xarray().to_array().to_numpy()
+    np_df = pd_df.to_xarray().to_array().to_numpy()
+    return np.squeeze(np_df)
 
 
 def fill_tensor_slow(df, lats, lons, days, scu_tens):

@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import dask.dataframe as dd
+import numpy.random
 import pandas as pd
 from tensorly.decomposition import parafac
 import time
@@ -18,12 +19,14 @@ def parquet_to_tensor(parquet_path, tensor_path):
     # save ndarray to a binary file for easy loading
     np.save(tensor_path + "scu_tens.npy", scu_tens)
 
-    decompose(scu_tens, tensor_path, 4)
+    decompose(scu_tens, tensor_path, 1)
     print("Completed")
 
 
 def decompose(scu_tens, tensor_path, r):
-    weights, factors = parafac(scu_tens, rank=r, init='random', tol=10e-6, mask=~np.isnan(scu_tens))
+    """Runs CP with rank r on scu_tens. Saves factor mxs to tensor_path"""
+    numpy.random.seed(594)
+    weights, factors = parafac(np.nan_to_num(scu_tens), rank=r, init='random', tol=10e-6, mask=~np.isnan(scu_tens))
     for i, fct in enumerate(factors):
         np.save(tensor_path + f"factor_{i}", fct)
 

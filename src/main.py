@@ -31,12 +31,15 @@ def decompose(scu_tens, tensor_path, r):
         np.save(tensor_path + f"factor_{i}", fct)
 
 
-def init_df(path, part=0, keep_extra_columns=False):
+def init_df(path, part=None, keep_extra_columns=False):
     """Initializes a Dask df from parquet path"""
     scu_tens_parq = dd.read_parquet(path)
     if not keep_extra_columns:
         scu_tens_parq = scu_tens_parq[["xlat", "xlon", "agg_day_period", "activity_index_total"]]
-    df = scu_tens_parq.partitions[part]
+    if part is not None:
+        df = scu_tens_parq.partitions[part]
+    else:
+        df = scu_tens_parq
     df.agg_day_period = dd.to_datetime(df.agg_day_period)
     return df
 

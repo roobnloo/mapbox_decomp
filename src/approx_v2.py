@@ -50,7 +50,7 @@ def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_
         fac = cp.fit_transform(np.nan_to_num(mapbox_tensor))
         
         tt[ii] = time.time() - start
-        err[ii] = tl.norm(tl.cp_to_tensor(fac) - np.nan_to_num(mapbox_tensor))
+        err[ii] = tl.norm(tl.cp_to_tensor(fac, mask=~np.isnan(mapbox_tensor)) - np.nan_to_num(mapbox_tensor))
         
         print('Execution time: ' + str("{:.2f}".format(tt[ii])) + ' ' + 'seconds')
 

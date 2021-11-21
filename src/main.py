@@ -59,26 +59,6 @@ def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
     return np.squeeze(np_df)
 
 
-def fill_tensor_slow(df, lats, lons, days, scu_tens):
-    """Fills in the values of scu_tens from dataframe df. This code is currently hot garbage. Very slow."""
-    tic = time.perf_counter()
-    for i, xlat in enumerate(lats):
-        toc = time.perf_counter()
-        print(f"iter {i}")
-        print(f"Number filled: {np.count_nonzero(~np.isnan(scu_tens))}")
-        print(f"Elapsed time: {(toc - tic)/60:1.1f} minutes")
-        matching_df0 = df.loc[df['xlat'] == lats[i]]
-        matching_xlons = matching_df0.xlon.compute()
-        for xlon in matching_xlons:
-            j = lons.index(xlon)
-            matching_df1 = matching_df0.loc[matching_df0['xlon'] == xlon]
-            matching_dates = matching_df1.agg_day_period.compute()
-            for d in matching_dates:
-                k = days.index(d)
-                vals = matching_df1[matching_df1['agg_day_period'] == d].activity_index_total.compute().values
-                scu_tens[i, j, k] = vals[0]
-
-
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')

@@ -46,7 +46,7 @@ def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_
     for ii, r in enumerate(ranks):
         start = time.time()
         
-        cp = CP(rank=r, tol=10e-3, linesearch=True)
+        cp = CP(rank=r, tol=10e-3, linesearch=True, mask=~np.isnan(mapbox_tensor))
         fac = cp.fit_transform(np.nan_to_num(mapbox_tensor))
         
         tt[ii] = time.time() - start
@@ -63,6 +63,7 @@ def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_
         # save factors to file 
         for i, fct in enumerate(factors):
             np.save(dir_to_save_factors + f"rank_{r}_factor_{i}", fct)
+            np.save(dir_to_save_factors + f"rank_{r}_weights", weights)
 
     
     # plotting magic 

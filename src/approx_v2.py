@@ -83,6 +83,9 @@ def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_
 
     fig.savefig(path_to_save_figures)
 
+    np.save(dir_to_save_factors + f"approximation_errors", err)
+    np.save(dir_to_save_factors + f"approximation_ranks", ranks)
+
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')

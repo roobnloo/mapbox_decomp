@@ -10,7 +10,7 @@ from tensorly.metrics.regression import RMSE
 import configparser
 import matplotlib.pyplot as plt
 
-def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=True):
+def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=True, back_end="numpy"):
     """Loops over a range of ranks for tensor approximation via PARAFAC decomposition. 
     
     Parameters:
@@ -30,6 +30,10 @@ def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_
     else:
         # read in original tensor 
         mapbox_tensor = tl.tensor(np.load(path_to_tensor))
+
+    # set backend 
+    if back_end!="numpy":
+        tl.set_backend(f'{back_end}') # or any other backend
     
     print(f"Tensor of size {mapbox_tensor.shape} imported")
     
@@ -93,4 +97,4 @@ if __name__ == '__main__':
     path_to_save_figures = config['PATHS']['path_to_save_figures']
     dir_to_save_factors = config['PATHS']['dir_to_save_factors']
     rank_params = [5,50,2]
-    rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=False)
+    rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=False, back_end="pytorch")

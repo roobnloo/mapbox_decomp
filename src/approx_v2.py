@@ -9,6 +9,9 @@ from tensorly.cp_tensor import CPTensor
 from tensorly.metrics.regression import RMSE
 import configparser
 import matplotlib.pyplot as plt
+import torch 
+
+print(torch.__version__)
 
 def rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=True, back_end="numpy"):
     """Loops over a range of ranks for tensor approximation via PARAFAC decomposition. 
@@ -97,4 +100,4 @@ if __name__ == '__main__':
     path_to_save_figures = config['PATHS']['path_to_save_figures']
     dir_to_save_factors = config['PATHS']['dir_to_save_factors']
     rank_params = [5,50,2]
-    rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=False, back_end="pytorch")
+    rank_approximator(path_to_tensor, rank_params, dir_to_save_factors, path_to_save_figures, testing=False, back_end="tensorflow")

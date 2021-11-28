@@ -36,6 +36,7 @@ def init_df(path, part=None, keep_extra_columns=False):
     scu_tens_parq = dd.read_parquet(path)
     if not keep_extra_columns:
         scu_tens_parq = scu_tens_parq[["xlat", "xlon", "agg_day_period", "activity_index_total"]]
+        #scu_tens_parq = scu_tens_parq[["geography", "agg_day_period", "poi_count", "activity_index_total"]]
     if part is not None:
         df = scu_tens_parq.partitions[part]
     else:
@@ -47,6 +48,7 @@ def init_df(path, part=None, keep_extra_columns=False):
 def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
     pd_df = df.compute()
     pd_df = pd_df.set_index(['xlat', 'xlon', 'agg_day_period'])
+    #pd_df = pd_df.set_index(['geography', 'agg_day_period', 'poi_count']) # change dims
     dupe_index = pd_df.index.duplicated(keep=not remove_duplicates)
     pd_df = pd_df[~dupe_index]
     pd_df = pd_df.sort_index()

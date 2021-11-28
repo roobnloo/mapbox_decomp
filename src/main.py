@@ -17,10 +17,11 @@ def parquet_to_tensor(parquet_path, tensor_path):
     print(f"Number of NaNs is {np.count_nonzero(np.isnan(scu_tens))}")
 
     # save ndarray to a binary file for easy loading
-    np.save(tensor_path + "scu_tens.npy", scu_tens)
+    filename = "scu_mapbox_poi_agg_tens.npy"
+    np.save(tensor_path + filename, scu_tens)
 
-    decompose(scu_tens, tensor_path, 1)
-    print("Completed")
+    # decompose(scu_tens, tensor_path, 1)
+    print(f"Saved {filename} to {tensor_path}")
 
 
 def decompose(scu_tens, tensor_path, r):
@@ -33,20 +34,15 @@ def decompose(scu_tens, tensor_path, r):
 
 def init_df(path, part=None, keep_extra_columns=False):
     """Initializes a Dask df from parquet path"""
-    scu_tens_parq = dd.read_parquet(path)
-    if not keep_extra_columns:
-        scu_tens_parq = scu_tens_parq[["xlat", "xlon", "agg_day_period", "activity_index_total"]]
-    if part is not None:
-        df = scu_tens_parq.partitions[part]
-    else:
-        df = scu_tens_parq
+    df = dd.read_parquet(path)
+    df = df.astype({'geography': 'int64', 'cnt': 'int32'})
     df.agg_day_period = dd.to_datetime(df.agg_day_period)
     return df
 
 
 def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
     pd_df = df.compute()
-    pd_df = pd_df.set_index(['xlat', 'xlon', 'agg_day_period'])
+    pd_df = pd_df.set_index(['geography', 'agg_day_period', 'cnt'])
     dupe_index = pd_df.index.duplicated(keep=not remove_duplicates)
     pd_df = pd_df[~dupe_index]
     pd_df = pd_df.sort_index()
@@ -62,6 +58,6 @@ def fill_tensor(df: dd.DataFrame, remove_duplicates=True) -> np.ndarray:
 if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')
-    path_to_scu_parquet = config['PATHS']['path_to_scu_parquet']
+    path_to_poi_agg_parq = config['PATHS']['path_to_poi_agg_parquet']
     tensor_out_path = config['PATHS']['tensor_out_path']
-    parquet_to_tensor(path_to_scu_parquet, tensor_out_path)
+    parquet_to_tensor(path_to_poi_agg_parq, tensor_out_path)

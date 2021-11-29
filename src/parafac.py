@@ -35,6 +35,7 @@ if __name__ == '__main__':
     config.read('config.ini')
     path_to_tensor = config['PATHS']['path_to_tensor']
     dir_to_save_factors = config['PATHS']['dir_to_save_factors']
-    rank_params = [10,71,3]
+    #rank_params = [10,71,3]
+    rank_params = [3,21,1]
     #store_factors_weights(path_to_tensor, rank_params, dir_to_save_factors, cp_type="NNCP")
     store_factors_weights(path_to_tensor, rank_params, dir_to_save_factors)

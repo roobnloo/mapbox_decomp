@@ -22,7 +22,7 @@ def read_quadkey_map(path_to_quadkey_map):
     return quadkey_map
 
 
-def generate(coords, rank, fact_dir, figures_dir):
+def create_spatial_plot(coords, rank, fact_dir, figures_dir):
     spatial_factors = np.load(fact_dir + f"rank_{str(rank)}_factor_0.npy")
     multiidx = pd.MultiIndex.from_tuples(coords)
     dominant = get_movement_matrix(spatial_factors, 0, multiidx)
@@ -48,14 +48,27 @@ def get_movement_matrix(spatial_factors, factor_idx, multi_idx):
 
 def get_coordinates(dir_parquet):
     df = dd.read_parquet(dir_parquet)
-    sorted_geos = df.geography.unique().compute().sort_values()
-    coords = [get_coord(g) for g in sorted_geos]
-    return coords
+    sorted_qks = df.geography.unique().compute().sort_values()
+    coords = [get_coord(g) for g in sorted_qks]
+    return sorted_qks, coords
 
 
 def get_coord(qk):
     bounds = mercantile.bounds(mercantile.quadkey_to_tile(qk))
     return (bounds.north + bounds.south)/2, (bounds.east + bounds.west)/2
+
+
+def serialize_data(qks, rank, fact_dir, dir_save_figures):
+    spatial_factors = np.load(fact_dir + f"rank_{str(rank)}_factor_0.npy")
+    f0 = spatial_factors[:, 0]
+    f1 = spatial_factors[:, 1]
+    f2 = spatial_factors[:, 2]
+    s0 = pd.Series(f0)
+    s1 = pd.Series(f1)
+    s2 = pd.Series(f2)
+    geography = pd.Series(qks)
+    df = pd.concat([geography, s0, s1, s2], axis=1)
+    df.to_csv(f"{dir_save_figures}spatial_factors_rank_{rank}.csv")
 
 
 if __name__ == '__main__':
@@ -64,6 +77,7 @@ if __name__ == '__main__':
     dir_to_save_factors = config['PATHS']['dir_to_save_factors']
     dir_save_figures = config['PATHS']['path_to_save_figures']
     dir_parquet = config['PATHS']['path_to_poi_agg_parquet']
-    coordinates = get_coordinates(dir_parquet)
-    for rank in range(3, 21):
-        generate(coordinates, rank, dir_to_save_factors, dir_save_figures)
+    qks, coordinates = get_coordinates(dir_parquet)
+    for rank in range(22, 71, 3):
+        # create_spatial_plot(coordinates, rank, dir_to_save_factors, dir_save_figures)
+        serialize_data(qks, rank, dir_to_save_factors, dir_save_figures)
